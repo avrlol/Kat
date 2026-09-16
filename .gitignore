@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.apk
+*.aab
+
+# Keep the wrapper jar out of git only if you regenerate it locally instead of committing it.
+# If Android Studio adds gradle/wrapper/gradle-wrapper.jar, DO commit it (needed to build without Android Studio).
