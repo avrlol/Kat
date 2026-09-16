@@ -66,6 +66,8 @@ dependencies {
     // Charts (Statistics screen, week 9)
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

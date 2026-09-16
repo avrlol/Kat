@@ -1,5 +1,6 @@
 package com.student.scheduler.adapters
 
+import android.graphics.Paint
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
@@ -10,11 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.student.scheduler.R
 import com.student.scheduler.model.TaskUi
 
-/**
- * Renders task cards on Home / Tasks screens.
- * [onCheckedChange] reports checkbox toggles back to the fragment/ViewModel
- * (from week 6 this will trigger a Room update instead of just a callback).
- */
 class TaskAdapter(
     private val tasks: List<TaskUi>,
     private val onCheckedChange: (position: Int, isChecked: Boolean) -> Unit
@@ -40,15 +36,27 @@ class TaskAdapter(
         holder.due.text = task.dueLabel
         holder.tag.text = task.tagName
 
-        // Tint the pill background drawable with this task's subject color.
         val pill = holder.tag.background.mutate() as GradientDrawable
         pill.setColor(holder.itemView.context.getColor(task.tagColor))
+
+        applyDoneStyle(holder, task.isDone)
 
         holder.checkbox.setOnCheckedChangeListener(null)
         holder.checkbox.isChecked = task.isDone
         holder.checkbox.setOnCheckedChangeListener { _, isChecked ->
+            applyDoneStyle(holder, isChecked)
             onCheckedChange(holder.bindingAdapterPosition, isChecked)
         }
+    }
+
+    private fun applyDoneStyle(holder: TaskViewHolder, isDone: Boolean) {
+        if (isDone) {
+            holder.title.paintFlags = holder.title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+        } else {
+            holder.title.paintFlags = holder.title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        }
+        holder.title.alpha = if (isDone) 0.5f else 1f
+        holder.due.alpha = if (isDone) 0.5f else 1f
     }
 
     override fun getItemCount(): Int = tasks.size

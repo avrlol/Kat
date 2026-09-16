@@ -8,15 +8,6 @@ import com.student.scheduler.model.LessonUi
 import com.student.scheduler.model.TaskUi
 import com.student.scheduler.model.WeekDay
 
-/**
- * ViewModel for the Home ("Сегодня") screen.
- *
- * TEMPORARY: data below is hardcoded mock data matching the approved
- * mockup, so the UI can be built and demoed before the database exists.
- * From week 2, [loadMockData] will be replaced with calls into a
- * LessonRepository / TaskRepository backed by Room, and the Fragment
- * will not need to change at all — it only observes LiveData.
- */
 class HomeViewModel : ViewModel() {
 
     private val _weekDays = MutableLiveData<List<WeekDay>>()
@@ -25,47 +16,59 @@ class HomeViewModel : ViewModel() {
     private val _todayLessons = MutableLiveData<List<LessonUi>>()
     val todayLessons: LiveData<List<LessonUi>> = _todayLessons
 
+    private val _lessonsHeader = MutableLiveData<String>()
+    val lessonsHeader: LiveData<String> = _lessonsHeader
+
     private val _todayTasks = MutableLiveData<List<TaskUi>>()
     val todayTasks: LiveData<List<TaskUi>> = _todayTasks
 
+    private var selectedDayIndex = 2
+    private val actualTodayIndex = 2
+
+    private val fullDayNames = listOf(
+        "Понедельник", "Вторник", "Среду", "Четверг", "Пятницу", "Субботу"
+    )
+
+    private val lessonsByDay: Map<Int, List<LessonUi>> = mapOf(
+        0 to listOf(
+            LessonUi("Физика (Практика)", "08:30–10:00", "Ауд. 110", "Проф. Петрова Е.В.", R.color.accent_coral),
+            LessonUi("Иностранный язык", "10:15–11:45", "Ауд. 202", "Доц. Кузнецова Л.И.", R.color.accent_green)
+        ),
+        1 to listOf(
+            LessonUi("Математический анализ", "09:00–10:30", "Ауд. 305", "Проф. Иванов А.М.", R.color.accent_blue),
+            LessonUi("Программирование", "10:45–12:15", "Ауд. 408", "Доц. Сидоров К.П.", R.color.accent_green)
+        ),
+        2 to listOf(
+            LessonUi("Математический анализ", "09:00–10:30", "Ауд. 305", "Проф. Иванов А.М.", R.color.accent_blue),
+            LessonUi("Физика (Лекция)", "10:45–12:15", "Ауд. 112", "Проф. Петрова Е.В.", R.color.accent_coral),
+            LessonUi("Программирование", "13:00–14:30", "Ауд. 408", "Доц. Сидоров К.П.", R.color.accent_green)
+        ),
+        3 to listOf(
+            LessonUi("Иностранный язык", "09:00–10:30", "Ауд. 202", "Доц. Кузнецова Л.И.", R.color.accent_green),
+            LessonUi("Математический анализ", "10:45–12:15", "Ауд. 305", "Проф. Иванов А.М.", R.color.accent_blue)
+        ),
+        4 to listOf(
+            LessonUi("Программирование", "09:00–10:30", "Ауд. 408", "Доц. Сидоров К.П.", R.color.accent_green),
+            LessonUi("Физика (Практика)", "10:45–12:15", "Ауд. 110", "Проф. Петрова Е.В.", R.color.accent_coral)
+        ),
+        5 to emptyList()
+    )
+
     init {
-        loadMockData()
+        loadMockWeekDays()
+        loadMockTasks()
+        showLessonsForSelectedDay()
     }
 
-    private fun loadMockData() {
-        _weekDays.value = listOf(
-            WeekDay("Пн", 11, isSelected = false),
-            WeekDay("Вт", 12, isSelected = false),
-            WeekDay("Ср", 13, isSelected = true),
-            WeekDay("Чт", 14, isSelected = false),
-            WeekDay("Пт", 15, isSelected = false),
-            WeekDay("Сб", 16, isSelected = false)
-        )
+    private fun loadMockWeekDays() {
+        val names = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб")
+        val numbers = listOf(11, 12, 13, 14, 15, 16)
+        _weekDays.value = names.indices.map { index ->
+            WeekDay(names[index], numbers[index], isSelected = index == selectedDayIndex)
+        }
+    }
 
-        _todayLessons.value = listOf(
-            LessonUi(
-                subjectName = "Математический анализ",
-                timeRange = "09:00–10:30",
-                room = "Ауд. 305",
-                teacher = "Проф. Иванов А.М.",
-                accentColor = R.color.accent_blue
-            ),
-            LessonUi(
-                subjectName = "Физика (Лекция)",
-                timeRange = "10:45–12:15",
-                room = "Ауд. 112",
-                teacher = "Проф. Петрова Е.В.",
-                accentColor = R.color.accent_coral
-            ),
-            LessonUi(
-                subjectName = "Программирование",
-                timeRange = "13:00–14:30",
-                room = "Ауд. 408",
-                teacher = "Доц. Сидоров К.П.",
-                accentColor = R.color.accent_green
-            )
-        )
-
+    private fun loadMockTasks() {
         _todayTasks.value = listOf(
             TaskUi(
                 title = "Лабораторная работа №3",
@@ -82,12 +85,26 @@ class HomeViewModel : ViewModel() {
         )
     }
 
-    /** Called by the Fragment when a task checkbox is toggled. */
+    private fun showLessonsForSelectedDay() {
+        _todayLessons.value = lessonsByDay[selectedDayIndex].orEmpty()
+        _lessonsHeader.value = if (selectedDayIndex == actualTodayIndex) {
+            "Пары сегодня"
+        } else {
+            "Пары — ${fullDayNames[selectedDayIndex]}"
+        }
+    }
+
+    fun selectDay(position: Int) {
+        if (position == selectedDayIndex) return
+        selectedDayIndex = position
+        loadMockWeekDays()
+        showLessonsForSelectedDay()
+    }
+
     fun onTaskCheckedChanged(position: Int, isChecked: Boolean) {
         val current = _todayTasks.value.orEmpty().toMutableList()
         if (position !in current.indices) return
         current[position] = current[position].copy(isDone = isChecked)
         _todayTasks.value = current
-        // TODO (week 6): persist this change via TaskRepository.update(...)
     }
 }

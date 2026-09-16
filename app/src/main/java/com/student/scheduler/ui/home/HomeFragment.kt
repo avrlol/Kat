@@ -2,6 +2,7 @@ package com.student.scheduler.ui.home
 
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,12 +13,6 @@ import com.student.scheduler.adapters.TaskAdapter
 import com.student.scheduler.adapters.WeekDayAdapter
 import com.student.scheduler.viewmodel.HomeViewModel
 
-/**
- * "Сегодня" — the app's home screen: greeting, week-day strip,
- * today's lessons and today's tasks. All content currently comes
- * from [HomeViewModel]'s mock data and will switch to Room-backed
- * LiveData once the database is in place (week 2 / week 4).
- */
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private val viewModel: HomeViewModel by viewModels()
@@ -28,19 +23,27 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val recyclerWeekDays = view.findViewById<RecyclerView>(R.id.recycler_week_days)
         val recyclerLessons = view.findViewById<RecyclerView>(R.id.recycler_lessons)
         val recyclerTasks = view.findViewById<RecyclerView>(R.id.recycler_tasks)
+        val textNoLessons = view.findViewById<TextView>(R.id.text_no_lessons)
+        val textLessonsHeader = view.findViewById<TextView>(R.id.text_lessons_header)
 
         recyclerLessons.layoutManager = LinearLayoutManager(requireContext())
         recyclerTasks.layoutManager = LinearLayoutManager(requireContext())
 
+        viewModel.lessonsHeader.observe(viewLifecycleOwner) { header ->
+            textLessonsHeader.text = header
+        }
+
         viewModel.weekDays.observe(viewLifecycleOwner) { days ->
             recyclerWeekDays.adapter = WeekDayAdapter(days) { position ->
-                // TODO (week 5): selecting a day should filter lessons for that day
-                // once Schedule screen and Room queries by date are in place.
+                viewModel.selectDay(position)
             }
         }
 
         viewModel.todayLessons.observe(viewLifecycleOwner) { lessons ->
             recyclerLessons.adapter = LessonAdapter(lessons)
+            val hasLessons = lessons.isNotEmpty()
+            recyclerLessons.visibility = if (hasLessons) View.VISIBLE else View.GONE
+            textNoLessons.visibility = if (hasLessons) View.GONE else View.VISIBLE
         }
 
         viewModel.todayTasks.observe(viewLifecycleOwner) { tasks ->
